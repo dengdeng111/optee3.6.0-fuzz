@@ -19,6 +19,7 @@
 #include <kernel/tee_time.h>
 #include <kernel/thread.h>
 #include <kernel/user_ta.h>
+#include <kernel/afl.h>
 #include <mm/core_mmu.h>
 #include <mm/core_memprot.h>
 #include <mm/mobj.h>
@@ -518,6 +519,31 @@ TEE_Result tee_ta_close_session(struct tee_ta_session *csess,
 		destroy_session(sess, open_sessions);
 		return TEE_SUCCESS;
 	}
+
+// 释放AFL的context
+#if defined(CFG_AFL_ENABLE)
+	if (sess->afl_ctx) {
+		free(sess->afl_ctx);
+		
+		sess->afl_ctx = NULL;
+	}
+
+	if (sess->svc_trace_ctx) {
+		// log buffers
+		sess->svc_trace_ctx->cmd_buf = (sess->svc_trace_ctx->cmd_buf) ? free(sess->svc_trace_ctx->cmd_buf), NULL : NULL;
+		sess->svc_trace_ctx->data_buf = (sess->svc_trace_ctx->data_buf) ? free(sess->svc_trace_ctx->data_buf), NULL : NULL;
+
+		// buffer ids
+		sess->svc_trace_ctx->buf_ptrs = (sess->svc_trace_ctx->buf_ptrs) ? free(sess->svc_trace_ctx->buf_ptrs), NULL : NULL;
+		sess->svc_trace_ctx->buf_sizes = (sess->svc_trace_ctx->buf_sizes) ? free(sess->svc_trace_ctx->buf_sizes), NULL : NULL;
+
+		// handles
+		sess->svc_trace_ctx->handles = (sess->svc_trace_ctx->handles) ? free(sess->svc_trace_ctx->handles), NULL : NULL;
+		sess->svc_trace_ctx->handle_buf_ids = (sess->svc_trace_ctx->handle_buf_ids) ? free(sess->svc_trace_ctx->handle_buf_ids), NULL : NULL;
+
+		sess->svc_trace_ctx = (free(sess->svc_trace_ctx), NULL);
+	}
+#endif
 
 	if (ctx->panicked) {
 		destroy_session(sess, open_sessions);

@@ -19,3 +19,10 @@ srcs-y += strcpy.c
 srcs-y += strncpy.c
 srcs-y += strrchr.c
 srcs-y += strtoul.c
+
+srcs-y += strncpy.c
+
+cflags-y += -fno-sanitize=all 
+cflags-remove-y += -fsanitize-coverage=trace-pc
+
+#cflags-y += -fsanitize-coverage=trace-pc

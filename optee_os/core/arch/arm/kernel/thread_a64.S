@@ -34,6 +34,9 @@
 LOCAL_FUNC vector_std_smc_entry , :
 	sub	sp, sp, #THREAD_SMC_ARGS_SIZE
 	store_xregs sp, THREAD_SMC_ARGS_X0, 0, 7
+
+	bl __afl_reset_thread_ctx
+
 	mov	x0, sp
 	bl	thread_handle_std_smc
 	/*
@@ -52,6 +55,9 @@ END_FUNC vector_std_smc_entry
 LOCAL_FUNC vector_fast_smc_entry , :
 	sub	sp, sp, #THREAD_SMC_ARGS_SIZE
 	store_xregs sp, THREAD_SMC_ARGS_X0, 0, 7
+
+	bl __afl_reset_thread_ctx
+
 	mov	x0, sp
 	bl	thread_handle_fast_smc
 	load_xregs sp, THREAD_SMC_ARGS_X0, 1, 8
@@ -63,8 +69,11 @@ END_FUNC vector_fast_smc_entry
 
 LOCAL_FUNC vector_fiq_entry , :
 	/* Secure Monitor received a FIQ and passed control to us. */
+	
+	bl __afl_reset_thread_ctx
+
 	bl	thread_check_canaries
-	adr	x16, thread_nintr_handler_ptr
+	ldr	x16, =thread_nintr_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	ldr	x0, =TEESMC_OPTEED_RETURN_FIQ_DONE
@@ -73,7 +82,9 @@ LOCAL_FUNC vector_fiq_entry , :
 END_FUNC vector_fiq_entry
 
 LOCAL_FUNC vector_cpu_on_entry , :
-	adr	x16, thread_cpu_on_handler_ptr
+	bl __afl_reset_thread_ctx
+
+	ldr	x16, =thread_cpu_on_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	mov	x1, x0
@@ -83,7 +94,7 @@ LOCAL_FUNC vector_cpu_on_entry , :
 END_FUNC vector_cpu_on_entry
 
 LOCAL_FUNC vector_cpu_off_entry , :
-	adr	x16, thread_cpu_off_handler_ptr
+	ldr	x16, =thread_cpu_off_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	mov	x1, x0
@@ -93,7 +104,7 @@ LOCAL_FUNC vector_cpu_off_entry , :
 END_FUNC vector_cpu_off_entry
 
 LOCAL_FUNC vector_cpu_suspend_entry , :
-	adr	x16, thread_cpu_suspend_handler_ptr
+	ldr	x16, =thread_cpu_suspend_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	mov	x1, x0
@@ -103,7 +114,9 @@ LOCAL_FUNC vector_cpu_suspend_entry , :
 END_FUNC vector_cpu_suspend_entry
 
 LOCAL_FUNC vector_cpu_resume_entry , :
-	adr	x16, thread_cpu_resume_handler_ptr
+	bl __afl_reset_thread_ctx
+
+	ldr	x16, =thread_cpu_resume_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	mov	x1, x0
@@ -113,7 +126,7 @@ LOCAL_FUNC vector_cpu_resume_entry , :
 END_FUNC vector_cpu_resume_entry
 
 LOCAL_FUNC vector_system_off_entry , :
-	adr	x16, thread_system_off_handler_ptr
+	ldr	x16, =thread_system_off_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	mov	x1, x0
@@ -123,7 +136,7 @@ LOCAL_FUNC vector_system_off_entry , :
 END_FUNC vector_system_off_entry
 
 LOCAL_FUNC vector_system_reset_entry , :
-	adr	x16, thread_system_reset_handler_ptr
+	ldr	x16, =thread_system_reset_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 	mov	x1, x0
@@ -155,6 +168,10 @@ KEEP_PAGER thread_vector_table
 
 /* void thread_resume(struct thread_ctx_regs *regs) */
 FUNC thread_resume , :
+	mov x20, x0
+	bl __afl_thread_resume
+	mov x0, x20
+
 	load_xregs x0, THREAD_CTX_REGS_SP, 1, 3
 	load_xregs x0, THREAD_CTX_REGS_X4, 4, 30
 	mov	sp, x1
@@ -1154,7 +1171,7 @@ END_FUNC el0_sync_abort
 	stp	x30, x2, [sp, #ELX_NINTR_REC_LR]
 
 	bl	thread_check_canaries
-	adr	x16, thread_nintr_handler_ptr
+	ldr	x16, =thread_nintr_handler_ptr
 	ldr	x16, [x16]
 	blr	x16
 

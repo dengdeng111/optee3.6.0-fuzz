@@ -13,6 +13,9 @@ void __do_panic(const char *file __maybe_unused,
 		const char *func __maybe_unused,
 		const char *msg __maybe_unused)
 {
+	// Set thread info registers to default values
+    __afl_set_ctx_ptr(0);
+
 	/* disable prehemption */
 	(void)thread_mask_exceptions(THREAD_EXCP_ALL);
 
@@ -29,6 +32,17 @@ void __do_panic(const char *file __maybe_unused,
 
 	EPRINT_STACK();
 	/* abort current execution */
+
+	struct tee_ta_session *sess;
+
+    //EMSG("Resume: tee_ta_get_current_session(&sess) == TEE_SUCCESS: %x", tee_ta_get_current_session(&sess) == TEE_SUCCESS);    
+
+    if (tee_ta_get_current_session(&sess) == TEE_SUCCESS && sess->afl_ctx && sess->afl_ctx->enabled) {
+    	EMSG_RAW("AFL Input:");
+        //hexdump(sess->afl_ctx->input, sess->afl_ctx->input_len);
+        dhex_dump(NULL, 0, 0, sess->afl_ctx->input, sess->afl_ctx->input_len);
+    }
+
 	while (1)
 		;
 }

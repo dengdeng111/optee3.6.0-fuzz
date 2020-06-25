@@ -28,7 +28,7 @@
 	(uint32_t)(core_mmu_is_shm_cached() ?  OPTEE_SMC_SHM_CACHED : 0)
 
 /* Sessions opened from normal world */
-static struct tee_ta_session_head tee_open_sessions =
+struct tee_ta_session_head tee_open_sessions =
 TAILQ_HEAD_INITIALIZER(tee_open_sessions);
 
 #ifdef CFG_CORE_RESERVED_SHM

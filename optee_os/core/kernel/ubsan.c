@@ -28,6 +28,22 @@ struct type_mismatch_data {
 	unsigned char type_check_kind;
 };
 
+struct type_mismatch_data_v1 {
+	struct source_location loc;
+	struct type_descriptor *type;
+	unsigned char log_alignment;
+	unsigned char type_check_kind;
+};
+
+struct pointer_overflow_data {
+	struct source_location loc;
+};
+
+struct invalid_builtin_data {
+	struct source_location loc;
+};
+
+
 struct overflow_data {
 	struct source_location loc;
 	struct type_descriptor *type;
@@ -70,6 +86,11 @@ struct nonnull_arg_data {
  */
 void __ubsan_handle_type_mismatch(struct type_mismatch_data *data,
 				  unsigned long ptr);
+void __ubsan_handle_type_mismatch_v1(struct type_mismatch_data_v1 *data,
+				  unsigned long ptr __unused);
+void __ubsan_handle_pointer_overflow(struct pointer_overflow_data *data,
+				  unsigned long base __unused, unsigned long result __unused);
+void __ubsan_handle_invalid_builtin(struct invalid_builtin_data *data);
 void __ubsan_handle_add_overflow(struct overflow_data *data,
 				  unsigned long lhs, unsigned long rhs);
 void __ubsan_handle_sub_overflow(struct overflow_data *data,
@@ -118,6 +139,29 @@ void __ubsan_handle_type_mismatch(struct type_mismatch_data *data,
 	if (ubsan_panic)
 		panic();
 }
+
+void __ubsan_handle_type_mismatch_v1(struct type_mismatch_data_v1 *data,
+				  unsigned long ptr __unused)
+{
+	print_loc(__func__, &data->loc);
+	if (ubsan_panic)
+		panic();
+}
+
+void __ubsan_handle_pointer_overflow(struct pointer_overflow_data *data,
+				  unsigned long base __unused, unsigned long result __unused)
+{
+	print_loc(__func__, &data->loc);
+	if (ubsan_panic)
+		panic();
+}
+
+void __ubsan_handle_invalid_builtin(struct invalid_builtin_data *data) {
+	print_loc(__func__, &data->loc);
+	if (ubsan_panic)
+		panic();
+}
+
 
 void __ubsan_handle_add_overflow(struct overflow_data *data,
 				 unsigned long lhs __unused,

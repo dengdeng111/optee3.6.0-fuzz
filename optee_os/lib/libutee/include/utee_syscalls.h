@@ -278,4 +278,10 @@ TEE_Result utee_cache_operation(void *va, size_t l, unsigned long op);
 
 TEE_Result utee_gprof_send(void *buf, size_t size, uint32_t *id);
 
+#ifdef CFG_AFL_ENABLE
+void utee_afl_cov_bitmap_init(void* input, size_t input_len);
+//void utee_afl_bitmap_disable(void);
+void utee_afl_cov_bitmap_shutdown(void* ptr);
+#endif
+
 #endif /* UTEE_SYSCALLS_H */

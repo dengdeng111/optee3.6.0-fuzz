@@ -109,7 +109,7 @@ CFG_CC_OPTIMIZE_FOR_SIZE ?= y
 ifeq ($(CFG_CC_OPTIMIZE_FOR_SIZE),y)
 platform-cflags-optimization ?= -Os
 else
-platform-cflags-optimization ?= -O0
+platform-cflags-optimization ?= -O3
 endif
 
 CFG_DEBUG_INFO ?= y

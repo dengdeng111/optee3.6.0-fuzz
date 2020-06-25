@@ -22,12 +22,26 @@ EDK2_BIN		?= $(EDK2_PATH)/Build/ArmVirtQemuKernel-AARCH64/DEBUG_GCC49/FV/QEMU_EF
 QEMU_PATH		?= $(ROOT)/qemu
 SOC_TERM_PATH		?= $(ROOT)/soc_term
 
-DEBUG ?= 1
+DEBUG ?= 0
+
+##########
+# AFL-TEE
+##########
+.PHONY: afl
+afl:
+	cd ../afl && AFL_NO_X86=1 CC=$(AARCH64_CROSS_COMPILE)gcc make clean all
+
+.PHONY: afl-tee
+afl-tee:
+	cd ../afl-tee && CC=$(AARCH64_CROSS_COMPILE)gcc make CROSS_COMPILE_S_USER=$(CROSS_COMPILE_S_USER) \
+														 CROSS_COMPILE_NS_USER=$(CROSS_COMPILE_NS_USER) \
+														 TEEC_EXPORT=$(OPTEE_CLIENT_EXPORT) \
+														 TA_DEV_KIT_DIR=$(OPTEE_OS_TA_DEV_KIT_DIR)
 
 ################################################################################
 # Targets
 ################################################################################
-all: arm-tf buildroot edk2 linux optee-os qemu soc-term
+all: arm-tf buildroot edk2 linux optee-os qemu soc-term afl afl-tee
 clean: arm-tf-clean buildroot-clean edk2-clean linux-clean optee-os-clean \
 	qemu-clean soc-term-clean check-clean
 
@@ -60,7 +74,7 @@ ARM_TF_FLAGS ?= \
 	DEBUG=$(ARM_TF_DEBUG) \
 	LOG_LEVEL=$(ARM_TF_LOGLVL)
 
-arm-tf: optee-os edk2
+arm-tf: optee-os
 	$(ARM_TF_EXPORTS) $(MAKE) -C $(ARM_TF_PATH) $(ARM_TF_FLAGS) all fip
 	mkdir -p $(BINARIES_PATH)
 	ln -sf $(ARM_TF_OUT)/bl1.bin $(BINARIES_PATH)
@@ -133,7 +147,23 @@ linux-cleaner: linux-cleaner-common
 # OP-TEE
 ################################################################################
 OPTEE_OS_COMMON_FLAGS += PLATFORM=vexpress-qemu_armv8a CFG_ARM64_core=y \
-			 DEBUG=$(DEBUG)
+			 DEBUG=0 CFG_PM_DEBUG=0 \
+			 CFG_SECURE_DATA_PATH=n \
+			 CFG_TEE_CORE_DEBUG=y \
+			 CFG_DEBUG_INFO=y \
+			 CFG_UNWIND=y \
+			 CFG_TEE_CORE_LOG_LEVEL=2 \
+			 CFG_CORE_SANITIZE_UNDEFINED=y \
+			 CFG_CORE_SANITIZE_KADDRESS=n \
+			 CFLAGS32="-fdiagnostics-color=always -O3" \
+			 CFLAGS64="-fdiagnostics-color=always -O3" \
+			 CFG_CC_OPTIMIZE_FOR_SIZE=n \
+			 CFG_CORE_HEAP_SIZE=2097152 \
+			 CFG_CORE_UNMAP_CORE_AT_EL0=n \
+			 CFG_SECSTOR_TA=n \
+			 CFG_SECURE_TIME_SOURCE_REE=n \
+			 core-platform-cflags="-O3 -ffunction-sections -fdata-sections -pipe -g3 -mstrict-align -mgeneral-regs-only -fsanitize=bounds-strict,pointer-overflow,signed-integer-overflow,vla-bound,object-size,builtin,shift,enum,nonnull-attribute,returns-nonnull-attribute -fsanitize-coverage=trace-pc -fstack-protector-strong -DCFG_AFL_ENABLE -DCFG_AFL_SKIP_TA_AUTHENTICATION"
+
 optee-os: optee-os-common
 
 OPTEE_OS_CLEAN_COMMON_FLAGS += PLATFORM=vexpress-qemu_armv8a

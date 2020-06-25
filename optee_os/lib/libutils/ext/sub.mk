@@ -10,3 +10,6 @@ srcs-y += consttime_memcmp.c
 srcs-y += memzero_explicit.c
 
 subdirs-$(arch_arm) += arch/$(ARCH)
+
+cflags-y += -fno-sanitize=all 
+cflags-remove-y += -fsanitize-coverage=trace-pc

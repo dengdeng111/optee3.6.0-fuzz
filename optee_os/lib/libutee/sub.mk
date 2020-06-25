@@ -23,3 +23,5 @@ endif
 endif #ifneq ($(sm),ldelf)
 
 subdirs-y += arch/$(ARCH)
+
+cflags-remove-y += -fsanitize-coverage=trace-pc

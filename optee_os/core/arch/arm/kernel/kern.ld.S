@@ -497,3 +497,6 @@ __asan_map_end = ((__asan_shadow_end - 1) / SMALL_PAGE_SIZE) *
 		 SMALL_PAGE_SIZE + SMALL_PAGE_SIZE;
 __asan_map_size = __asan_map_end - __asan_map_start;
 #endif /*CFG_CORE_SANITIZE_KADDRESS*/
+
+__afl_text_start = __text_start;
+__afl_text_end = __text_end;

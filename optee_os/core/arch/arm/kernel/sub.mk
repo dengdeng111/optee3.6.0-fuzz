@@ -59,3 +59,25 @@ srcs-$(CFG_VIRTUALIZATION) += virtualization.c
 srcs-y += link_dummies.c
 
 asm-defines-y += asm-defines.c
+
+cflags-y += -fno-sanitize=all
+
+cflags-remove-abort.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-early_ta.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-elf_load.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-elf_load_dyn.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-mutex.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-pseudo_ta.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-ree_fs_ta.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-secstor_ta.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-spin_lock_debug.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-tee_time.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-tee_time_arm_cntpct.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-tee_time_ree.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-thread.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-trace_ext.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-unwind_arm32.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-unwind_arm64.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-user_ta.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-vfp.c-y += -fsanitize-coverage=trace-pc
+cflags-remove-wait_queue.c-y += -fsanitize-coverage=trace-pc

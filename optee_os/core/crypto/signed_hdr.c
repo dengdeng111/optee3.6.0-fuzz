@@ -54,6 +54,7 @@ TEE_Result shdr_verify_signature(const struct shdr *shdr)
 	if (shdr->magic != SHDR_MAGIC)
 		return TEE_ERROR_SECURITY;
 
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	if (TEE_ALG_GET_MAIN_ALG(shdr->algo) != TEE_MAIN_ALGO_RSA)
 		return TEE_ERROR_SECURITY;
 
@@ -83,5 +84,6 @@ out:
 	crypto_acipher_free_rsa_public_key(&key);
 	if (res)
 		return TEE_ERROR_SECURITY;
+#endif
 	return TEE_SUCCESS;
 }

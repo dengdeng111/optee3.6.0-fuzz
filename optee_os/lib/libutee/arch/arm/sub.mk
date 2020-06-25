@@ -12,3 +12,4 @@ subdirs-y += gprof
 subdirs-y += ftrace
 endif #$(sm-$(sm)-is-ld)
 
+cflags-remove-y += -fsanitize-coverage=trace-pc

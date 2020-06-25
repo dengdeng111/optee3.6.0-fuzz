@@ -29,3 +29,9 @@ srcs-y += toupper.c
 
 subdirs-y += newlib
 subdirs-$(arch_arm) += arch/$(ARCH)
+
+cflags-y += -fno-sanitize=all
+cflags-remove-y += -fsanitize-coverage=trace-pc
+
+cflags-remove-bget.c-y += -fno-sanitize=all
+cflags-remove-bget_malloc.c-y += -fno-sanitize=all

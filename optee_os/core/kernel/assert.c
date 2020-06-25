@@ -8,6 +8,8 @@
 #include <trace.h>
 #include <kernel/panic.h>
 
+#include <kernel/afl.h>
+
 /* assert log and break for the optee kernel */
 
 void _assert_log(const char *expr __maybe_unused,
@@ -15,6 +17,10 @@ void _assert_log(const char *expr __maybe_unused,
 		 const int line __maybe_unused,
 		 const char *func __maybe_unused)
 {
+
+	// Set thread info registers to default values
+    __afl_set_ctx_ptr(0);
+
 #if defined(CFG_TEE_CORE_DEBUG)
 	EMSG_RAW("assertion '%s' failed at %s:%d <%s>",
 		 expr, file, line, func);

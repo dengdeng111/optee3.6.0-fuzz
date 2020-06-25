@@ -94,6 +94,7 @@ srcs-$(sm-$(ta-target)) += $(addprefix mbedtls/library/, $(SRCS_TLS))
 
 cflags-lib-y += -Wno-redundant-decls
 cflags-lib-y += -Wno-switch-default
+cflags-lib-$(CFG_ULIBS_GPROF) += -pg
 
 ifeq ($(CFG_CRYPTOLIB_NAME_mbedtls),y)
 subdirs-$(sm-core) += core

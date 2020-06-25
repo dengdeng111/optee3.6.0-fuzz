@@ -42,6 +42,15 @@ struct syscall_entry {
 #define SYSCALL_ENTRY(_fn) { .fn = (syscall_t)_fn }
 #endif
 
+#ifdef CFG_AFL_ENABLE
+#define AFL_SYSCALLS 2
+
+#include <kernel/afl.h>
+
+#else
+#define AFL_SYSCALLS 0
+#endif
+
 /*
  * This array is ordered according to the SYSCALL ids TEE_SCN_xxx
  */
@@ -117,6 +126,14 @@ static const struct syscall_entry tee_svc_syscall_table[] = {
 	SYSCALL_ENTRY(syscall_not_supported),
 	SYSCALL_ENTRY(syscall_not_supported),
 	SYSCALL_ENTRY(syscall_cache_operation),
+
+#ifdef CFG_AFL_ENABLE
+
+	SYSCALL_ENTRY(syscall_afl_cov_bitmap_init),
+	//SYSCALL_ENTRY(__afl_bitmap_disable),
+	SYSCALL_ENTRY(syscall_afl_cov_bitmap_shutdown),
+
+#endif
 };
 
 #ifdef TRACE_SYSCALLS
@@ -170,6 +187,34 @@ static void set_svc_retval(struct thread_svc_regs *regs, uint64_t ret_val)
 }
 #endif /*ARM64*/
 
+#ifdef CFG_AFL_ENABLE
+// Called by tee_svc_handler just before it starts executing a syscall handler
+static inline void __afl_cov_trace_start(struct tee_ta_session *sess) {
+    assert(sess->afl_ctx != NULL);
+    assert(__afl_ctx_ptr() == NULL);
+
+    sess->afl_ctx->prev_loc = 0;
+
+    __afl_set_ctx_ptr(sess->afl_ctx);
+
+    sess->afl_ctx->enabled = true;
+}
+
+// Called by tee_svc_handler just after it finished executing a syscall handler
+static inline void __afl_cov_trace_stop(struct tee_ta_session *sess) {
+    assert(sess->afl_ctx != NULL);
+
+    if (sess->afl_ctx != __afl_ctx_ptr()) {
+        EMSG("ctx: %p != %p", sess->afl_ctx, __afl_ctx_ptr());
+        assert(sess->afl_ctx == __afl_ctx_ptr());
+    }
+
+    sess->afl_ctx->enabled = false;
+
+    __afl_set_ctx_ptr(0);   
+}
+#endif
+
 /*
  * Note: this function is weak just to make it possible to exclude it from
  * the unpaged area.
@@ -180,9 +225,10 @@ void __weak tee_svc_handler(struct thread_svc_regs *regs)
 	size_t max_args;
 	syscall_t scf;
 	uint32_t state;
+	uint32_t exceptions;
 
 	COMPILE_TIME_ASSERT(ARRAY_SIZE(tee_svc_syscall_table) ==
-				(TEE_SCN_MAX + 1));
+				(TEE_SCN_MAX + AFL_SYSCALLS + 1));
 
 	/* Enable native interupts */
 	state = thread_get_exceptions();
@@ -206,12 +252,49 @@ void __weak tee_svc_handler(struct thread_svc_regs *regs)
 		return;
 	}
 
-	if (scn > TEE_SCN_MAX)
+	if (scn > TEE_SCN_MAX + AFL_SYSCALLS)
 		scf = (syscall_t)syscall_not_supported;
 	else
 		scf = tee_svc_syscall_table[scn].fn;
 
+	// Disable interrupts
+	exceptions = thread_mask_exceptions(THREAD_EXCP_ALL);
+
+#ifdef CFG_AFL_ENABLE
+	struct tee_ta_session *sess;
+
+    assert(tee_ta_get_current_session(&sess) == TEE_SUCCESS);
+
+	if (scn <= TEE_SCN_MAX && sess->afl_ctx != NULL) { // Only trace when we have a bitmap and it's not an AFL syscall
+		if (scn != TEE_SCN_LOG) // We use log extensively in our TA
+			__afl_cov_trace_start(sess);
+
+		set_svc_retval(regs, tee_svc_do_call(regs, scf));
+
+		if (scn != TEE_SCN_LOG)
+			__afl_cov_trace_stop(sess);
+	}
+	else {
+		uint64_t args[TEE_SVC_MAX_ARGS];
+
+		if (scn <= TEE_SCN_MAX) { // Normals SVCs
+			__afl_svc_trace_log_call(scn, regs, &args);
+		}
+
+		set_svc_retval(regs, tee_svc_do_call(regs, scf));
+
+		if (scn <= TEE_SCN_MAX) {
+			__afl_svc_trace_log_call_post(scn, regs, &args);
+		}
+	}
+#else
+
 	set_svc_retval(regs, tee_svc_do_call(regs, scf));
+
+#endif
+
+	/* Restore interrupts */
+	thread_unmask_exceptions(exceptions);
 
 	if (scn != TEE_SCN_RETURN) {
 		/* We're about to switch back to user mode */

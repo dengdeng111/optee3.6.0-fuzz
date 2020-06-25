@@ -28,7 +28,7 @@ cppflags$(sm)	+= -I$(out-dir)/core/include
 cppflags$(sm)	+= $(core-platform-cppflags)
 cflags$(sm)	+= $(core-platform-cflags)
 ifeq ($(CFG_CORE_SANITIZE_UNDEFINED),y)
-cflags$(sm)	+= -fsanitize=undefined
+#cflags$(sm)	+= -fsanitize=undefined
 endif
 ifeq ($(CFG_CORE_SANITIZE_KADDRESS),y)
 ifeq ($(CFG_ASAN_SHADOW_OFFSET),)

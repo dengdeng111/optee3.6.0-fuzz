@@ -63,3 +63,6 @@ srcs-y += s_countLeadingZeros64.c
 srcs-y += s_mul64To128.c
 
 srcs-y += softfloat_state.c
+
+cflags-y += -fno-sanitize=all 
+cflags-remove-y += -fsanitize-coverage=trace-pc

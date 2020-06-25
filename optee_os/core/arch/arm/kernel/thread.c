@@ -10,6 +10,7 @@
 #include <assert.h>
 #include <io.h>
 #include <keep.h>
+#include <kernel/afl.h>
 #include <kernel/asan.h>
 #include <kernel/lockdep.h>
 #include <kernel/misc.h>
@@ -755,8 +756,19 @@ static void release_unused_kernel_stack(struct thread_ctx *thr __unused,
 }
 #endif
 
+__attribute__( ( always_inline ) ) static inline uint32_t __get_LR(void) {
+    register uintptr_t result;
+
+    __asm volatile ("mov %0, x30\n" : "=r" (result) );
+
+    return(result);
+}
+
 int thread_state_suspend(uint32_t flags, uint32_t cpsr, vaddr_t pc)
 {
+	//EMSG("Suspend LR: %p", __get_LR());
+	__afl_thread_suspend();
+
 	struct thread_core_local *l = thread_get_core_local();
 	int ct = l->curr_thread;
 

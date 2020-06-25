@@ -84,8 +84,10 @@ static TEE_Result ree_fs_ta_open(const TEE_UUID *uuid,
 	struct ree_fs_ta_handle *handle;
 	struct shdr *shdr = NULL;
 	struct mobj *mobj = NULL;
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	void *hash_ctx = NULL;
 	uint32_t hash_algo = 0;
+#endif
 	struct shdr *ta = NULL;
 	size_t ta_size = 0;
 	TEE_Result res;
@@ -120,6 +122,7 @@ static TEE_Result ree_fs_ta_open(const TEE_UUID *uuid,
 	 * Initialize a hash context and run the algorithm over the signed
 	 * header (less the final file hash and its signature of course)
 	 */
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	hash_algo = TEE_DIGEST_HASH_TO_ALGO(shdr->algo);
 	res = crypto_hash_alloc_ctx(&hash_ctx, hash_algo);
 	if (res != TEE_SUCCESS)
@@ -131,6 +134,8 @@ static TEE_Result ree_fs_ta_open(const TEE_UUID *uuid,
 				     sizeof(*shdr));
 	if (res != TEE_SUCCESS)
 		goto error_free_hash;
+#endif
+
 	offs = SHDR_GET_SIZE(shdr);
 
 	if (shdr->img_type == SHDR_BOOTSTRAP_TA) {
@@ -156,10 +161,13 @@ static TEE_Result ree_fs_ta_open(const TEE_UUID *uuid,
 			goto error_free_hash;
 		}
 
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 		res = crypto_hash_update(hash_ctx, hash_algo,
 					 (uint8_t *)&bs_hdr, sizeof(bs_hdr));
 		if (res != TEE_SUCCESS)
 			goto error_free_hash;
+#endif
+
 		offs += sizeof(bs_hdr);
 	}
 
@@ -171,15 +179,19 @@ static TEE_Result ree_fs_ta_open(const TEE_UUID *uuid,
 	handle->nw_ta = ta;
 	handle->nw_ta_size = ta_size;
 	handle->offs = offs;
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	handle->hash_algo = hash_algo;
 	handle->hash_ctx = hash_ctx;
+#endif
 	handle->shdr = shdr;
 	handle->mobj = mobj;
 	*h = (struct user_ta_store_handle *)handle;
 	return TEE_SUCCESS;
 
 error_free_hash:
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	crypto_hash_free_ctx(hash_ctx, hash_algo);
+#endif
 error_free_payload:
 	thread_rpc_free_payload(mobj);
 error:
@@ -249,10 +261,13 @@ static TEE_Result ree_fs_ta_read(struct user_ta_store_handle *h, void *data,
 		dst = data; /* Hash secure buffer (shm might be modified) */
 		memcpy(dst, src, len);
 	}
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	res = crypto_hash_update(handle->hash_ctx, handle->hash_algo, dst, len);
 	if (res != TEE_SUCCESS)
 		return TEE_ERROR_SECURITY;
+#endif
 	handle->offs += len;
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	if (handle->offs == handle->nw_ta_size) {
 		/*
 		 * Last read: time to check if our digest matches the expected
@@ -261,6 +276,9 @@ static TEE_Result ree_fs_ta_read(struct user_ta_store_handle *h, void *data,
 		res = check_digest(handle);
 	}
 	return res;
+#else
+	return TEE_SUCCESS;
+#endif
 }
 
 static void ree_fs_ta_close(struct user_ta_store_handle *h)
@@ -270,7 +288,9 @@ static void ree_fs_ta_close(struct user_ta_store_handle *h)
 	if (!handle)
 		return;
 	thread_rpc_free_payload(handle->mobj);
+#ifndef CFG_AFL_SKIP_TA_AUTHENTICATION
 	crypto_hash_free_ctx(handle->hash_ctx, handle->hash_algo);
+#endif
 	free(handle->shdr);
 	free(handle);
 }

@@ -30,3 +30,6 @@ cflags-arm32_aeabi_softfloat.c-y += -Wno-missing-declarations
 subdirs-$(CFG_ARM32_$(sm)) += softfloat
 endif
 endif
+
+cflags-y += -fno-sanitize=all 
+cflags-remove-y += -fsanitize-coverage=trace-pc

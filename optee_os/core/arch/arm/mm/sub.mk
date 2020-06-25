@@ -10,3 +10,6 @@ srcs-y += tee_mm.c
 srcs-y += pgt_cache.c
 srcs-y += mobj.c
 srcs-$(CFG_CORE_DYN_SHM) += mobj_dyn_shm.c
+
+cflags-y += -fno-sanitize=all
+cflags-remove-y += -fsanitize-coverage=trace-pc

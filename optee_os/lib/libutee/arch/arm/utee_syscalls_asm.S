@@ -122,3 +122,8 @@
                      TEE_SCN_CRYP_OBJ_GENERATE_KEY, 4
 
         UTEE_SYSCALL utee_cache_operation, TEE_SCN_CACHE_OPERATION, 3
+
+//#if CFG_AFL_ENABLE
+        UTEE_SYSCALL utee_afl_cov_bitmap_init, (TEE_SCN_MAX+1), 0
+        UTEE_SYSCALL utee_afl_cov_bitmap_shutdown, (TEE_SCN_MAX+2), 0
+//#endif
