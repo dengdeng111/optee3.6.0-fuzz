@@ -7,6 +7,7 @@
 #include <kernel/panic.h>
 #include <kernel/thread.h>
 #include <trace.h>
+#include <kernel/afl.h>
 
 void __do_panic(const char *file __maybe_unused,
 		const int line __maybe_unused,

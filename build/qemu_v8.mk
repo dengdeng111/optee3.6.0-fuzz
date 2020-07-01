@@ -169,6 +169,10 @@ optee-os: optee-os-common
 OPTEE_OS_CLEAN_COMMON_FLAGS += PLATFORM=vexpress-qemu_armv8a
 optee-os-clean: optee-os-clean-common
 
+optee-client: optee-client-common
+
+optee-client-clean: optee-client-clean-common
+
 ################################################################################
 # Soc-term
 ################################################################################

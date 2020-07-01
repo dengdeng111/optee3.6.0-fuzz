@@ -73,6 +73,7 @@ if (CFG_GP_SOCKETS)
 	)
 endif()
 
+set(CFG_SECSTOR_TA_MGMT_PTA true)
 if (CFG_SECSTOR_TA_MGMT_PTA)
 	list (APPEND SRC install_ta.c)
 endif()

@@ -9,8 +9,10 @@ READELF ?= $(CROSS_COMPILE)readelf
 OBJS = main.o
 
 CFLAGS += -Wall -I../ta/include -I./include
-CFLAGS += -I$(TEEC_EXPORT)/include
-LDADD += -lteec -L$(TEEC_EXPORT)/lib
+# CFLAGS += -I$(TEEC_EXPORT)/include
+# LDADD += -lteec -L$(TEEC_EXPORT)/lib
+CFLAGS += -I$(TEEC_EXPORT)/usr/include
+LDADD += -lteec -L$(TEEC_EXPORT)/usr/lib
 
 BINARY = optee_example_aes
 
