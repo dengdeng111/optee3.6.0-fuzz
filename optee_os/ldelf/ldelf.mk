@@ -6,9 +6,9 @@ sm-$(sm) := y
 
 link-out-dir$(sm) := $(out-dir)/$(sm)
 
-# cppflags$(sm)	:= $(core-platform-cppflags)
+cppflags$(sm)	:= $(core-platform-cppflags)
 cflags$(sm)	:= -fpie -fvisibility=hidden
-# aflags$(sm)	:= $(core-platform-aflags)
+aflags$(sm)	:= $(core-platform-aflags)
 
 # ldelf is compiled for the same arch or register width as core
 ifeq ($(CFG_ARM64_core),y)
