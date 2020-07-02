@@ -26,7 +26,7 @@ DEBUG = 1
 ################################################################################
 # Targets
 ################################################################################
-all: arm-tf u-boot buildroot linux optee-os qemu soc-term afl afl-tee
+all: arm-tf u-boot buildroot linux optee-os qemu soc-term
 clean: arm-tf-clean u-boot-clean buildroot-clean linux-clean optee-os-clean \
 	qemu-clean soc-term-clean check-clean
 
